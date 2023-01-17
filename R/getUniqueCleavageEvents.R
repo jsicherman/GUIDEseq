@@ -341,10 +341,14 @@ getUniqueCleavageEvents <-
         colnames(minus.cleavage.R2) <- c("seqnames", "start", "UMI")
         plus.cleavage <- rbind(plus.cleavage.R2, plus.cleavage.R1)
         minus.cleavage <- rbind(minus.cleavage.R2, minus.cleavage.R1)
-        plus.cleavage <- cbind(plus.cleavage, strand = "+")
-        minus.cleavage <- cbind(minus.cleavage, strand = "-")
-        colnames(plus.cleavage)[4] <-  "strand"
-        colnames(minus.cleavage)[4] <-  "strand"
+        plus.cleavage$strand <- character()
+        minus.cleavage$strand <- character()
+        
+        if(nrow(plus.cleavage) > 0)
+          plus.cleavage$strand <- '+'
+        
+        if(nrow(minus.cleavage) > 0)
+          minus.cleavage$strand <- '-'
 
         unique.umi.both <- rbind(plus.cleavage, minus.cleavage)
 
