@@ -206,6 +206,8 @@
 #' not to be removed for testing purpose
 #' @param resume default to FALSE to restart the analysis. set it TRUE to
 #' resume an analysis.
+#' @param save.intermediates default to FALSE to not save a bunch of intermediate files.
+#' set it to true to get the bed, RDS and etc. output (must be true if using resume)
 #' @return \item{offTargets}{ a data frame, containing all input peaks with
 #' potential gRNA binding sites, mismatch number and positions, alignment to
 #' the input gRNA and predicted cleavage score.}
@@ -354,7 +356,8 @@ GUIDEseqAnalysis <- function(alignment.inputfile,
      max.n.bulge = 2L,
      min.peak.score.bulge = 60L,
      removeDuplicate = TRUE,
-     resume = FALSE)
+     resume = FALSE,
+     save.intermediates = FALSE)
 {
     alignment.format <- match.arg(alignment.format)
     orderOfftargetsBy <- match.arg(orderOfftargetsBy)
@@ -481,29 +484,31 @@ GUIDEseqAnalysis <- function(alignment.inputfile,
             temp <- as.data.frame(cleavages$cleavage.gr)
             temp1 <- paste(temp[,1], temp[,5], temp[,2], sep = "")
             read.summary <- table(temp1)
-            write.table(read.summary,
-                    file = file.path(outputDir,
-                                     paste(gRNAName, fileName,
-                    "ReadSummary.xls", sep = "")),
-                  sep = "\t", row.names = FALSE)
+              write.table(read.summary,
+                          file = file.path(outputDir,
+                                           paste(gRNAName, fileName,
+                                                 "ReadSummary.xls", sep = "")),
+                          sep = "\t", row.names = FALSE)
             seq.depth <- as.data.frame(table(cleavages$umi.count.summary$n))
             colnames(seq.depth)[1] <- c("UMIduplicateLevels")
-            write.table(seq.depth,
-                    file = file.path(outputDir,
-                                     paste(gRNAName, fileName,
-                    "UMIsummary.xls", sep = "")),
-                    sep = "\t", row.names = FALSE)
+              write.table(seq.depth,
+                          file = file.path(outputDir,
+                                           paste(gRNAName, fileName,
+                                                 "UMIsummary.xls", sep = "")),
+                          sep = "\t", row.names = FALSE)
 	     list(cleavages.gr = cleavages$cleavage.gr,
 	         read.summary = read.summary,
 	         sequence.depth = cleavages$sequence.depth)
          }))
-        saveRDS(cleavages.gr, file = file.path(outputDir,"cleavages.RDS"))
+         if(save.intermediates)
+           saveRDS(cleavages.gr, file = file.path(outputDir,"cleavages.RDS"))
         message("Peak calling ...\n")
         if (n.files > 1)
               combined.gr <- c(cleavages.gr[[1]], cleavages.gr[[4]])
         else
               combined.gr <- cleavages.gr[[1]]
-        saveRDS(combined.gr, file.path(outputDir,"combined.gr.RDS"))
+        if(save.intermediates)
+          saveRDS(combined.gr, file.path(outputDir,"combined.gr.RDS"))
         
         peaks <- getPeaks(combined.gr, step = step,
             window.size = window.size, bg.window.size = bg.window.size,
@@ -694,7 +699,8 @@ GUIDEseqAnalysis <- function(alignment.inputfile,
                                 offTargets[,ind4:dim(offTargets)[2]])
                 colnames(offTargets)[ind2+1] <- name.ind2
             }
-        }
+       }
+       if(save.intermediates)
         saveRDS(offTargets, file = file.path(outputDir,"offTargetsWithNoBulge.RDS"))
     } # if offtarget analysis has not been performed previously
     else
